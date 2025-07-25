@@ -12,7 +12,6 @@
   color: #61dafb;
 }
 
-/* Animations personnalisées pour TaskMarket */
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
@@ -20,24 +19,4 @@
   to {
     transform: rotate(360deg);
   }
-}
-
-/* Animation pour les cartes de propriétés */
-.property-card-hover {
-  transition: all 0.3s ease-in-out;
-}
-
-.property-card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* Animation pour les boutons */
-.button-hover {
-  transition: all 0.2s ease-in-out;
-}
-
-.button-hover:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
 }

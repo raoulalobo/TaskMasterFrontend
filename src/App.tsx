@@ -17,7 +17,6 @@ import AdminUsersPage from './pages/AdminUsersPage';
 import AdminPropertiesPage from './pages/AdminPropertiesPage';
 import AdminTransactionsPage from './pages/AdminTransactionsPage';
 import ProfilePage from './pages/ProfilePage';
-import './App.css';
 
 function App() {
   return (
@@ -26,7 +25,6 @@ function App() {
         <Navbar />
         <main className="flex-grow">
           <Routes>
-          {/* Routes publiques */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -43,7 +41,7 @@ function App() {
             } 
           />
           
-          {/* Routes pour les acheteurs et visiteurs */}
+          {/* Routes pour les acheteurs */}
           <Route 
             path="/properties" 
             element={<PropertiesPage />} 
