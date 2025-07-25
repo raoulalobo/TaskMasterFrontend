@@ -1,8 +1,8 @@
-// Service API complet pour TaskMarket
+// api.ts
 import { notifyAuthChange } from '../hooks/useAuth';
 import { parseBackendError, ApiError } from './errorHandling';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = 'http://localhost:8000/api';
 
 // Types pour nos données
 export interface User {
@@ -43,8 +43,8 @@ export interface PropertyReport {
   property: number;
   reporter: number;
   reporter_name: string;
-  title: string;
-  description: string;
+  title: string;        // Intitulé du signalement
+  description: string;  // Description du signalement
   created_at: string;
   status: 'pending' | 'reviewed' | 'resolved';
 }
@@ -54,9 +54,9 @@ export interface VisitRequest {
   property: number;
   requester: number;
   requester_name: string;
-  title: string;
-  requested_date: string;
-  description: string;
+  title: string;        // Toujours "Demande de visite"
+  requested_date: string; // Date souhaitée pour la visite
+  description: string;  // Description/commentaires
   created_at: string;
   status: 'pending' | 'accepted' | 'rejected';
 }
@@ -107,6 +107,7 @@ export class ApiRequestError extends Error {
     this.statusCode = statusCode;
   }
 }
+
 
 // Service API
 class ApiService {
@@ -235,7 +236,7 @@ class ApiService {
     }
   }
 
-  // Méthode spécifique pour les uploads de fichiers
+  // Méthode spécifique pour les uploads de fichiers qui ne retournent pas nécessairement du JSON
   private async requestFileUpload<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const config: RequestInit = {
@@ -256,6 +257,7 @@ class ApiService {
         try {
           errorData = await response.json();
         } catch {
+          // Si on ne peut pas parser la réponse JSON, créer une erreur basique
           const text = await response.text().catch(() => '');
           errorData = {
             detail: text || (response.status === 500 
@@ -279,22 +281,54 @@ class ApiService {
         throw new ApiRequestError(apiError, response.status);
       }
       
-      return await response.json();
+      // Essayer de parser en JSON, sinon retourner les données brutes
+      const result = await response.json().catch(async () => {
+        const text = await response.text().catch(() => '');
+        return text as unknown as T;
+      });
+      
+      return result as T;
     } catch (error) {
       console.error(`Erreur lors de la requête ${url}:`, error);
       
+      // Si c'est déjà une ApiRequestError, la relancer
       if (error instanceof ApiRequestError) {
         throw error;
       }
       
+      // Si c'est une erreur de réseau ou autre
       if (error instanceof TypeError && error.message.includes('fetch')) {
         const apiError = parseBackendError('Erreur de connexion, vérifiez votre connexion internet');
         throw new ApiRequestError(apiError);
       }
       
+      // Pour toute autre erreur inattendue
       const errorMessage = error instanceof Error ? error.message : 'Une erreur inattendue s\'est produite';
       const apiError = parseBackendError(errorMessage);
       throw new ApiRequestError(apiError);
+    }
+  }
+
+  private async requestWithoutResponse(endpoint: string, options: RequestInit = {}): Promise<void> {
+    const url = `${this.baseUrl}${endpoint}`;
+    const config: RequestInit = {
+      ...options,
+      headers: {
+        ...this.getHeaders(),
+        ...options.headers,
+      },
+    };
+
+    try {
+      const response = await fetch(url, config);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Erreur HTTP: ${response.status}`);
+      }
+    } catch (error) {
+      console.error(`Erreur lors de la requête ${url}:`, error);
+      throw error;
     }
   }
 
@@ -315,16 +349,12 @@ class ApiService {
   }
 
   async logout(): Promise<void> {
-    try {
-      await this.request('/logout/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Token ${this.token}`,
-        },
-      });
-    } catch {
-      // Ignorer les erreurs de logout côté serveur
-    }
+    await this.requestWithoutResponse('/logout/', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${this.token}`,
+      },
+    });
     
     this.removeToken();
   }
@@ -338,7 +368,7 @@ class ApiService {
     return this.request<User>(`/users/${id}/`);
   }
 
-  async createUser(userData: Omit<User, 'id'> & { password: string }): Promise<User> {
+  async createUser(userData: Omit<User, 'id'>): Promise<User> {
     console.log('Creating user with data:', userData);
     return this.request<User>('/users/', {
       method: 'POST',
@@ -354,7 +384,7 @@ class ApiService {
   }
 
   async deleteUser(id: number): Promise<void> {
-    await this.request(`/users/${id}/`, {
+    await this.requestWithoutResponse(`/users/${id}/`, {
       method: 'DELETE',
     });
   }
@@ -383,7 +413,7 @@ class ApiService {
   }
 
   async deleteProperty(id: number): Promise<void> {
-    await this.request(`/properties/${id}/`, {
+    await this.requestWithoutResponse(`/properties/${id}/`, {
       method: 'DELETE',
     });
   }
@@ -412,8 +442,9 @@ class ApiService {
     });
   }
 
+  // Supprimer une image de propriété par ID
   async deletePropertyImage(imageId: number): Promise<void> {
-    await this.request(`/property-images/${imageId}/`, {
+    await this.requestWithoutResponse(`/property-images/${imageId}/`, {
       method: 'DELETE',
     });
   }
@@ -460,7 +491,7 @@ class ApiService {
     return this.request<Transaction>(`/transactions/${id}/`);
   }
 
-  async createTransaction(transactionData: { property: number; agreed_price: number }): Promise<Transaction> {
+  async createTransaction(transactionData: Omit<Transaction, 'id' | 'buyer' | 'buyer_name' | 'seller' | 'seller_name' | 'created_at' | 'updated_at' | 'property_title'>): Promise<Transaction> {
     return this.request<Transaction>('/transactions/', {
       method: 'POST',
       body: JSON.stringify(transactionData),
@@ -486,4 +517,5 @@ class ApiService {
   }
 }
 
-export default new ApiService(API_BASE_URL);
+const apiService = new ApiService(API_BASE_URL);
+export default apiService;

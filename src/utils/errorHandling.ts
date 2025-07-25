@@ -157,6 +157,14 @@ export function parseBackendError(errorData: any): ApiError {
 }
 
 /**
+ * Crée un message d'erreur pour un champ spécifique avec contexte
+ */
+export function createFieldErrorMessage(fieldName: string, message: string): string {
+  const fieldLabel = getFieldLabel(fieldName);
+  return `${fieldLabel}: ${message}`;
+}
+
+/**
  * Extrait les erreurs spécifiques à un champ donné
  */
 export function getFieldErrors(apiError: ApiError, fieldName: string): string[] {
@@ -174,4 +182,17 @@ export function getFieldErrors(apiError: ApiError, fieldName: string): string[] 
  */
 export function hasFieldError(apiError: ApiError, fieldName: string): boolean {
   return getFieldErrors(apiError, fieldName).length > 0;
+}
+
+/**
+ * Obtient toutes les erreurs de champs sous forme de message unique
+ */
+export function getAllFieldErrorsMessage(apiError: ApiError): string {
+  if (apiError.type !== 'field' || !apiError.fieldErrors) {
+    return '';
+  }
+  
+  return apiError.fieldErrors
+    .map(error => createFieldErrorMessage(error.field, error.message))
+    .join('\n');
 }
