@@ -1,253 +1,78 @@
-// Utilitaires de validation côté client
+// Validation des formulaires
 
-export interface ValidationResult {
-  isValid: boolean;
-  message?: string;
-}
-
-/**
- * Valide une adresse email
- */
-export function validateEmail(email: string): ValidationResult {
-  if (!email) {
-    return {
-      isValid: false,
-      message: 'L\'adresse email est obligatoire'
-    };
-  }
-  
+export const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return {
-      isValid: false,
-      message: 'Veuillez saisir une adresse email valide'
-    };
-  }
-  
-  return { isValid: true };
-}
+  return emailRegex.test(email);
+};
 
-/**
- * Valide un nom d'utilisateur
- */
-export function validateUsername(username: string): ValidationResult {
-  if (!username) {
-    return {
-      isValid: false,
-      message: 'Le nom d\'utilisateur est obligatoire'
-    };
-  }
-  
-  if (username.length < 3) {
-    return {
-      isValid: false,
-      message: 'Le nom d\'utilisateur doit contenir au moins 3 caractères'
-    };
-  }
-  
-  if (username.length > 150) {
-    return {
-      isValid: false,
-      message: 'Le nom d\'utilisateur ne peut pas dépasser 150 caractères'
-    };
-  }
-  
-  // Vérifier les caractères autorisés (lettres, chiffres, @/./+/-/_)
-  const usernameRegex = /^[a-zA-Z0-9@.\+\-_]+$/;
-  if (!usernameRegex.test(username)) {
-    return {
-      isValid: false,
-      message: 'Le nom d\'utilisateur ne peut contenir que des lettres, chiffres et les caractères @.+-_'
-    };
-  }
-  
-  return { isValid: true };
-}
+export const validatePassword = (password: string): boolean => {
+  // Au moins 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
+  return passwordRegex.test(password);
+};
 
-/**
- * Valide un mot de passe
- */
-export function validatePassword(password: string): ValidationResult {
-  if (!password) {
-    return {
-      isValid: false,
-      message: 'Le mot de passe est obligatoire'
-    };
-  }
-  
-  if (password.length < 8) {
-    return {
-      isValid: false,
-      message: 'Le mot de passe doit contenir au moins 8 caractères'
-    };
-  }
-  
-  // Vérifier que le mot de passe n'est pas trop simple
-  const commonPasswords = [
-    'password', '12345678', 'qwerty', 'abc123', 'password123',
-    '123456789', 'welcome', 'admin', 'root', 'user'
-  ];
-  
-  if (commonPasswords.includes(password.toLowerCase())) {
-    return {
-      isValid: false,
-      message: 'Ce mot de passe est trop courant, choisissez-en un plus sécurisé'
-    };
-  }
-  
-  // Vérifier qu'il contient au moins 2 types de caractères différents
-  const hasLowercase = /[a-z]/.test(password);
-  const hasUppercase = /[A-Z]/.test(password);
-  const hasNumbers = /\d/.test(password);
-  const hasSpecialChars = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-  
-  const typesCount = [hasLowercase, hasUppercase, hasNumbers, hasSpecialChars].filter(Boolean).length;
-  
-  if (typesCount < 2) {
-    return {
-      isValid: false,
-      message: 'Le mot de passe doit contenir au moins 2 types de caractères (minuscules, majuscules, chiffres, symboles)'
-    };
-  }
-  
-  return { isValid: true };
-}
+export const validatePhone = (phone: string): boolean => {
+  // Validation pour les numéros de téléphone français
+  const phoneRegex = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/;
+  return phoneRegex.test(phone);
+};
 
-/**
- * Valide la confirmation de mot de passe
- */
-export function validatePasswordConfirmation(password: string, passwordConfirm: string): ValidationResult {
-  if (!passwordConfirm) {
-    return {
-      isValid: false,
-      message: 'La confirmation du mot de passe est obligatoire'
-    };
-  }
-  
-  if (password !== passwordConfirm) {
-    return {
-      isValid: false,
-      message: 'Les mots de passe ne correspondent pas'
-    };
-  }
-  
-  return { isValid: true };
-}
+export const validatePrice = (price: string): boolean => {
+  const priceRegex = /^\d+(?:\.\d{1,2})?$/;
+  return priceRegex.test(price);
+};
 
-/**
- * Valide un prénom ou nom
- */
-export function validateName(name: string, fieldLabel: string): ValidationResult {
-  if (!name) {
-    return {
-      isValid: false,
-      message: `Le ${fieldLabel.toLowerCase()} est obligatoire`
-    };
-  }
-  
-  if (name.length < 1) {
-    return {
-      isValid: false,
-      message: `Le ${fieldLabel.toLowerCase()} doit contenir au moins 1 caractère`
-    };
-  }
-  
-  if (name.length > 30) {
-    return {
-      isValid: false,
-      message: `Le ${fieldLabel.toLowerCase()} ne peut pas dépasser 30 caractères`
-    };
-  }
-  
-  // Vérifier que le nom ne contient que des lettres, espaces, apostrophes et tirets
-  const nameRegex = /^[a-zA-ZàáâäçéèêëïîôöùúûüÿñÀÁÂÄÇÉÈÊËÏÎÔÖÙÚÛÜŸÑ\s'\-]+$/;
-  if (!nameRegex.test(name)) {
-    return {
-      isValid: false,
-      message: `Le ${fieldLabel.toLowerCase()} ne peut contenir que des lettres, espaces, apostrophes et tirets`
-    };
-  }
-  
-  return { isValid: true };
-}
+export const validateSize = (size: string): boolean => {
+  const sizeRegex = /^\d+(?:\.\d{1,2})?$/;
+  return sizeRegex.test(size);
+};
 
-/**
- * Valide un champ requis générique
- */
-export function validateRequired(value: string, fieldLabel: string): ValidationResult {
-  if (!value || value.trim().length === 0) {
-    return {
-      isValid: false,
-      message: `${fieldLabel} est obligatoire`
-    };
+export const validateUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
   }
-  
-  return { isValid: true };
-}
+};
 
-/**
- * Valide tous les champs d'un formulaire de connexion
- */
-export function validateLoginForm(username: string, password: string): Record<string, ValidationResult> {
+// Messages d'erreur
+export const validationMessages = {
+  email: 'Veuillez entrer une adresse email valide',
+  password: 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre',
+  phone: 'Veuillez entrer un numéro de téléphone valide',
+  price: 'Veuillez entrer un prix valide',
+  size: 'Veuillez entrer une taille valide',
+  required: 'Ce champ est requis',
+  url: 'Veuillez entrer une URL valide',
+};
+
+// Validation de propriété
+export const validateProperty = (data: any): { isValid: boolean; errors: Record<string, string> } => {
+  const errors: Record<string, string> = {};
+
+  if (!data.title || data.title.trim() === '') {
+    errors.title = validationMessages.required;
+  }
+
+  if (!data.description || data.description.trim() === '') {
+    errors.description = validationMessages.required;
+  }
+
+  if (!data.price || !validatePrice(data.price.toString())) {
+    errors.price = validationMessages.price;
+  }
+
+  if (!data.size || !validateSize(data.size.toString())) {
+    errors.size = validationMessages.size;
+  }
+
+  if (!data.location || data.location.trim() === '') {
+    errors.location = validationMessages.required;
+  }
+
   return {
-    username: validateRequired(username, 'Le nom d\'utilisateur'),
-    password: validateRequired(password, 'Le mot de passe')
+    isValid: Object.keys(errors).length === 0,
+    errors,
   };
-}
-
-/**
- * Valide tous les champs d'un formulaire d'inscription
- */
-export function validateRegisterForm(formData: {
-  username: string;
-  email: string;
-  password1: string;
-  password2: string;
-  first_name: string;
-  last_name: string;
-  phone_number?: string;
-  address?: string;
-}): Record<string, ValidationResult> {
-  const results: Record<string, ValidationResult> = {
-    username: validateUsername(formData.username),
-    email: validateEmail(formData.email),
-    password1: validatePassword(formData.password1),
-    password2: validatePasswordConfirmation(formData.password1, formData.password2),
-    first_name: validateName(formData.first_name, 'Prénom'),
-    last_name: validateName(formData.last_name, 'Nom'),
-  };
-  
-  // Validation spéciale : vérifier que le mot de passe n'est pas trop similaire au nom d'utilisateur
-  if (formData.password1 && formData.username) {
-    const passwordLower = formData.password1.toLowerCase();
-    const usernameLower = formData.username.toLowerCase();
-    
-    if (passwordLower.includes(usernameLower) || usernameLower.includes(passwordLower)) {
-      results.password1 = {
-        isValid: false,
-        message: 'Le mot de passe ne doit pas être similaire au nom d\'utilisateur'
-      };
-    }
-  }
-  
-  return results;
-}
-
-/**
- * Vérifie si tous les résultats de validation sont valides
- */
-export function isFormValid(validationResults: Record<string, ValidationResult>): boolean {
-  return Object.values(validationResults).every(result => result.isValid);
-}
-
-/**
- * Obtient le premier message d'erreur d'un ensemble de résultats de validation
- */
-export function getFirstErrorMessage(validationResults: Record<string, ValidationResult>): string | null {
-  for (const result of Object.values(validationResults)) {
-    if (!result.isValid && result.message) {
-      return result.message;
-    }
-  }
-  return null;
-}
+};
