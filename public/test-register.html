@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Registration</title>
+</head>
+<body>
+    <h1>Test Registration</h1>
+    <button id="testBtn">Test Registration</button>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                const userData = {
+                    username: 'testuser4',
+                    email: 'test4@example.com',
+                    password: 'testpassword',
+                    first_name: 'Test4',
+                    last_name: 'User4',
+                    user_type: 'buyer',
+                    phone_number: '123456789',
+                    address: 'Test Address'
+                };
+
+                console.log('Sending request with data:', userData);
+                
+                const response = await fetch('http://127.0.0.1:8000/api/users/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                resultDiv.innerHTML = 'Success: ' + JSON.stringify(result);
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = 'Error: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
