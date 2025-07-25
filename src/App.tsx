@@ -1,154 +1,153 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import PrivateRoute from './components/PrivateRoute';
-import RoleBasedRoute from './components/RoleBasedRoute';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import useAuth from './hooks/useAuth';
+import './App.css';
+
+// Import des pages
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import PropertiesPage from './pages/PropertiesPage';
+import PropertyDetailPage from './pages/PropertyDetailPage';
 import AddPropertyPage from './pages/AddPropertyPage';
 import EditPropertyPage from './pages/EditPropertyPage';
-import PropertyDetailPage from './pages/PropertyDetailPage';
-import TransactionsPage from './pages/TransactionsPage';
 import MyPropertiesPage from './pages/MyPropertiesPage';
+import CreateTransactionPage from './pages/CreateTransactionPage';
+import TransactionsPage from './pages/TransactionsPage';
+import TransactionDetailPage from './pages/TransactionDetailPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import AdminPropertiesPage from './pages/AdminPropertiesPage';
 import AdminTransactionsPage from './pages/AdminTransactionsPage';
-import ProfilePage from './pages/ProfilePage';
+
+// Import des composants
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+
+// Composant PrivateRoute pour protéger les routes
+interface PrivateRouteProps {
+  children: React.ReactNode;
+}
+
+const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  return user ? <>{children}</> : <Navigate to="/login" />;
+};
+
+// Composant RoleBasedRoute pour les routes admin
+interface RoleBasedRouteProps {
+  children: React.ReactNode;
+  allowedRoles: string[];
+}
+
+const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return allowedRoles.includes(user.user_type) ? (
+    <>{children}</>
+  ) : (
+    <Navigate to="/" />
+  );
+};
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Navbar />
-        <main className="flex-grow">
-          <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          
-          {/* Route profil - accessible à tous les utilisateurs connectés */}
-          <Route 
-            path="/profile" 
-            element={
-              <PrivateRoute>
-                <RoleBasedRoute allowedRoles={['buyer', 'landowner', 'admin']}>
-                  <ProfilePage />
-                </RoleBasedRoute>
-              </PrivateRoute>
-            } 
-          />
-          
-          {/* Routes pour les acheteurs */}
-          <Route 
-            path="/properties" 
-            element={<PropertiesPage />} 
-          />
-          <Route 
-            path="/property/:id" 
-            element={<PropertyDetailPage />} 
-          />
-          
-          {/* Routes pour les propriétaires */}
-          <Route 
-            path="/my-properties" 
-            element={
-              <PrivateRoute>
-                <RoleBasedRoute allowedRoles={['landowner']}>
-                  <MyPropertiesPage />
-                </RoleBasedRoute>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/add-property" 
-            element={
-              <PrivateRoute>
-                <RoleBasedRoute allowedRoles={['landowner']}>
+    <AuthProvider>
+      <Router>
+        <div className="App">
+          <Navbar />
+          <main>
+            <Routes>
+              {/* Routes publiques */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/properties" element={<PropertiesPage />} />
+              <Route path="/property/:id" element={<PropertyDetailPage />} />
+              
+              {/* Routes protégées - propriétaires */}
+              <Route path="/add-property" element={
+                <PrivateRoute>
                   <AddPropertyPage />
-                </RoleBasedRoute>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/edit-property/:id" 
-            element={
-              <PrivateRoute>
-                <RoleBasedRoute allowedRoles={['landowner']}>
+                </PrivateRoute>
+              } />
+              <Route path="/edit-property/:id" element={
+                <PrivateRoute>
                   <EditPropertyPage />
-                </RoleBasedRoute>
-              </PrivateRoute>
-            } 
-          />
-          
-          {/* Routes pour les acheteurs et propriétaires */}
-          <Route 
-            path="/transactions" 
-            element={
-              <PrivateRoute>
-                <RoleBasedRoute allowedRoles={['buyer', 'landowner']}>
+                </PrivateRoute>
+              } />
+              <Route path="/my-properties" element={
+                <PrivateRoute>
+                  <MyPropertiesPage />
+                </PrivateRoute>
+              } />
+              
+              {/* Routes protégées - acheteurs */}
+              <Route path="/create-transaction/:id" element={
+                <PrivateRoute>
+                  <CreateTransactionPage />
+                </PrivateRoute>
+              } />
+              <Route path="/transactions" element={
+                <PrivateRoute>
                   <TransactionsPage />
-                </RoleBasedRoute>
-              </PrivateRoute>
-            } 
-          />
-          
-          {/* Routes administrateurs */}
-          <Route 
-            path="/admin" 
-            element={
-              <PrivateRoute>
+                </PrivateRoute>
+              } />
+              <Route path="/transaction/:id" element={
+                <PrivateRoute>
+                  <TransactionDetailPage />
+                </PrivateRoute>
+              } />
+              
+              {/* Routes admin */}
+              <Route path="/admin" element={
                 <RoleBasedRoute allowedRoles={['admin']}>
                   <AdminDashboardPage />
                 </RoleBasedRoute>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/admin/users" 
-            element={
-              <PrivateRoute>
+              } />
+              <Route path="/admin/users" element={
                 <RoleBasedRoute allowedRoles={['admin']}>
                   <AdminUsersPage />
                 </RoleBasedRoute>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/admin/properties" 
-            element={
-              <PrivateRoute>
+              } />
+              <Route path="/admin/properties" element={
                 <RoleBasedRoute allowedRoles={['admin']}>
                   <AdminPropertiesPage />
                 </RoleBasedRoute>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/admin/transactions" 
-            element={
-              <PrivateRoute>
+              } />
+              <Route path="/admin/transactions" element={
                 <RoleBasedRoute allowedRoles={['admin']}>
                   <AdminTransactionsPage />
                 </RoleBasedRoute>
-              </PrivateRoute>
-            } 
-          />
-          </Routes>
-        </main>
-        
-        {/* Footer global */}
-        <footer className="bg-gray-50 border-t border-gray-200">
-          <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <p className="text-center text-sm text-gray-600">
-              Fait par amour pour les Camerounais par les Camerounais ❤️
-            </p>
-          </div>
-        </footer>
-      </div>
-    </Router>
+              } />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
